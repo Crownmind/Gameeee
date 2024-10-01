@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Hit Game - Mobile Version</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e09, #e0e);
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 10px;
+        }
+
+        #gameArea {
+            position: relative;
+            width: 90vw; /* Use viewport width for responsiveness */
+            height: 50vh; /* Use viewport height */
+            border: 2px solid #fff;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .target {
+            position: absolute;
+            width: 10vw; /* Make targets responsive */
+            height: auto;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .shoe {
+            position: absolute;
+            width: 8vw; /* Make the shoe responsive */
+            height: auto;
+        }
+
+        .control-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            margin: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background: #444;
+            color: #fff;
+            font-size: 1.5em;
+            touch-action: manipulation;
+        }
+
+        #shootButton {
+            width: 100px;
+            height: 100px;
+            background: red;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .scoreboard {
+            margin: 15px;
+            font-size: 1.2em;
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Hit the Moving Targets!</h1>
+    <div id="gameArea">
+        <img id="shoe" class="shoe" src="https://img.icons8.com/emoji/48/000000/running-shoe.png" alt="Shoe">
+        <img id="target1" class="target" src="https://via.placeholder.com/50" alt="Target 1">
+        <img id="target2" class="target" src="https://via.placeholder.com/50/00ff00" alt="Target 2">
+        <img id="target3" class="target" src="https://via.placeholder.com/50/ff0000" alt="Target 3">
+    </div>
+    <div class="scoreboard">
+        Shots Left: <span id="shotsLeft">5</span> | Score: <span id="score">0</span>
+    </div>
+    <div class="control-container">
+        <div class="control-btn" id="upBtn" onclick="moveShoe('up')">↑</div>
+        <div class="control-btn" id="downBtn" onclick="moveShoe('down')">↓</div>
+        <div class="control-btn" id="leftBtn" onclick="moveShoe('left')">←</div>
+        <div class="control-btn" id="rightBtn" onclick="moveShoe('right')">→</div>
+    </div>
+    <button id="shootButton" onclick="shoot()">Shoot</button>
+    <button id="restartButton" onclick="restartGame()">Restart</button>
+
+    <script>
+        let score = 0;
+        let shotsLeft = 5;
+        const gameArea = document.getElementById('gameArea');
+        const shoe = document.getElementById('shoe');
+        const targets = [
+            document.getElementById('target1'),
+            document.getElementById('target2'),
+            document.getElementById('target3')
+        ];
+
+        const targetSpeeds = [
+            { dx: 2, dy: 1 },
+            { dx: -1, dy: 2 },
+            { dx: 3, dy: -2 }
+        ];
+
+        let shoePosition = { x: 100, y: 100 };
+
+        function moveShoe(direction) {
+            const moveBy = 20;
+            if (direction === 'up' && shoePosition.y > 0) shoePosition.y -= moveBy;
+            if (direction === 'down' && shoePosition.y < gameArea.clientHeight - shoe.clientHeight) shoePosition.y += moveBy;
+            if (direction === 'left' && shoePosition.x > 0) shoePosition.x -= moveBy;
+            if (direction === 'right' && shoePosition.x < gameArea.clientWidth - shoe.clientWidth) shoePosition.x += moveBy;
+
+            shoe.style.left = shoePosition.x + 'px';
+            shoe.style.top = shoePosition.y + 'px';
+        }
+
+        function moveTargets() {
+            targets.forEach((target, index) => {
+                const speed = targetSpeeds[index];
+                let x = parseInt(target.style.left) || Math.random() * (gameArea.clientWidth - target.clientWidth);
+                let y = parseInt(target.style.top) || Math.random() * (gameArea.clientHeight - target.clientHeight);
+                x += speed.dx;
+                y += speed.dy;
+
+                if (x <= 0 || x >= gameArea.clientWidth - target.clientWidth) speed.dx *= -1;
+                if (y <= 0 || y >= gameArea.clientHeight - target.clientHeight) speed.dy *= -1;
+
+                target.style.left = x + 'px';
+                target.style.top = y + 'px';
+            });
+        }
+
+        function shoot() {
+            shotsLeft--;
+            document.getElementById('shotsLeft').textContent = shotsLeft;
+
+            targets.forEach((target) => {
+                const rect1 = shoe.getBoundingClientRect();
+                const rect2 = target.getBoundingClientRect();
+                if (!(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom)) {
+                    score++;
+                    document.getElementById('score').textContent = score;
+                }
+            });
+
+            if (shotsLeft === 0) {
+                alert(`Game Over! Final Score: ${score}`);
+                restartGame();
+            }
+        }
+
+        function restartGame() {
+            score = 0;
+            shotsLeft = 5;
+            document.getElementById('shotsLeft').textContent = shotsLeft;
+            document.getElementById('score').textContent = score;
+            shoePosition = { x: 100, y: 100 };
+            shoe.style.left = shoePosition.x + 'px';
+            shoe.style.top = shoePosition.y + 'px';
+        }
+
+        setInterval(moveTargets, 30);
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Hit Game - Mobile Version</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e09, #e0e);
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 10px;
+        }
+
+        #gameArea {
+            position: relative;
+            width: 90vw; /* Use viewport width for responsiveness */
+            height: 50vh; /* Use viewport height */
+            border: 2px solid #fff;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .target {
+            position: absolute;
+            width: 10vw; /* Make targets responsive */
+            height: auto;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .shoe {
+            position: absolute;
+            width: 8vw; /* Make the shoe responsive */
+            height: auto;
+        }
+
+        .control-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            margin: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background: #444;
+            color: #fff;
+            font-size: 1.5em;
+            touch-action: manipulation;
+        }
+
+        #shootButton {
+            width: 100px;
+            height: 100px;
+            background: red;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .scoreboard {
+            margin: 15px;
+            font-size: 1.2em;
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Hit the Moving Targets!</h1>
+    <div id="gameArea">
+        <img id="shoe" class="shoe" src="https://img.icons8.com/emoji/48/000000/running-shoe.png" alt="Shoe">
+        <img id="target1" class="target" src="https://via.placeholder.com/50" alt="Target 1">
+        <img id="target2" class="target" src="https://via.placeholder.com/50/00ff00" alt="Target 2">
+        <img id="target3" class="target" src="https://via.placeholder.com/50/ff0000" alt="Target 3">
+    </div>
+    <div class="scoreboard">
+        Shots Left: <span id="shotsLeft">5</span> | Score: <span id="score">0</span>
+    </div>
+    <div class="control-container">
+        <div class="control-btn" id="upBtn" onclick="moveShoe('up')">↑</div>
+        <div class="control-btn" id="downBtn" onclick="moveShoe('down')">↓</div>
+        <div class="control-btn" id="leftBtn" onclick="moveShoe('left')">←</div>
+        <div class="control-btn" id="rightBtn" onclick="moveShoe('right')">→</div>
+    </div>
+    <button id="shootButton" onclick="shoot()">Shoot</button>
+    <button id="restartButton" onclick="restartGame()">Restart</button>
+
+    <script>
+        let score = 0;
+        let shotsLeft = 5;
+        const gameArea = document.getElementById('gameArea');
+        const shoe = document.getElementById('shoe');
+        const targets = [
+            document.getElementById('target1'),
+            document.getElementById('target2'),
+            document.getElementById('target3')
+        ];
+
+        const targetSpeeds = [
+            { dx: 2, dy: 1 },
+            { dx: -1, dy: 2 },
+            { dx: 3, dy: -2 }
+        ];
+
+        let shoePosition = { x: 100, y: 100 };
+
+        function moveShoe(direction) {
+            const moveBy = 20;
+            if (direction === 'up' && shoePosition.y > 0) shoePosition.y -= moveBy;
+            if (direction === 'down' && shoePosition.y < gameArea.clientHeight - shoe.clientHeight) shoePosition.y += moveBy;
+            if (direction === 'left' && shoePosition.x > 0) shoePosition.x -= moveBy;
+            if (direction === 'right' && shoePosition.x < gameArea.clientWidth - shoe.clientWidth) shoePosition.x += moveBy;
+
+            shoe.style.left = shoePosition.x + 'px';
+            shoe.style.top = shoePosition.y + 'px';
+        }
+
+        function moveTargets() {
+            targets.forEach((target, index) => {
+                const speed = targetSpeeds[index];
+                let x = parseInt(target.style.left) || Math.random() * (gameArea.clientWidth - target.clientWidth);
+                let y = parseInt(target.style.top) || Math.random() * (gameArea.clientHeight - target.clientHeight);
+                x += speed.dx;
+                y += speed.dy;
+
+                if (x <= 0 || x >= gameArea.clientWidth - target.clientWidth) speed.dx *= -1;
+                if (y <= 0 || y >= gameArea.clientHeight - target.clientHeight) speed.dy *= -1;
+
+                target.style.left = x + 'px';
+                target.style.top = y + 'px';
+            });
+        }
+
+        function shoot() {
+            shotsLeft--;
+            document.getElementById('shotsLeft').textContent = shotsLeft;
+
+            targets.forEach((target) => {
+                const rect1 = shoe.getBoundingClientRect();
+                const rect2 = target.getBoundingClientRect();
+                if (!(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom)) {
+                    score++;
+                    document.getElementById('score').textContent = score;
+                }
+            });
+
+            if (shotsLeft === 0) {
+                alert(`Game Over! Final Score: ${score}`);
+                restartGae();
+            }
+        }
+
+        function restartGame() {
+            score = 0;
+            shotsLeft = 5;
+            document.getElementById('shotsLeft').textContent = shotsLeft;
+            document.getElementById('score').textContent = score;
+            shoePosition = { x: 100, y: 100 };
+            shoe.style.left = shoePosition.x + 'px';
+            shoe.style.top = shoePosition.y + 'px';
+        }
+
+        setInterval(moveTargets, 30);
+    </script>
+</body>
+</html>h
